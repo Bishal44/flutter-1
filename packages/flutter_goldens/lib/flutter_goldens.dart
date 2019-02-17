@@ -5,14 +5,13 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meta/meta.dart';
 
-import 'client.dart';
-export 'client.dart';
+import 'package:flutter_goldens_client/client.dart';
+export 'package:flutter_goldens_client/client.dart';
 
 /// Main method that can be used in a `flutter_test_config.dart` file to set
 /// [goldenFileComparator] to an instance of [FlutterGoldenFileComparator] that
@@ -65,25 +64,33 @@ class FlutterGoldenFileComparator implements GoldenFileComparator {
     defaultComparator ??= goldenFileComparator;
 
     // Prepare the goldens repo.
-    goldens ??= new GoldensClient();
+    goldens ??= GoldensClient();
     await goldens.prepare();
 
     // Calculate the appropriate basedir for the current test context.
     final FileSystem fs = goldens.fs;
     final Directory testDirectory = fs.directory(defaultComparator.basedir);
     final String testDirectoryRelativePath = fs.path.relative(testDirectory.path, from: goldens.flutterRoot.path);
-    return new FlutterGoldenFileComparator(goldens.repositoryRoot.childDirectory(testDirectoryRelativePath).uri);
+    return FlutterGoldenFileComparator(goldens.repositoryRoot.childDirectory(testDirectoryRelativePath).uri);
   }
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {
     final File goldenFile = _getGoldenFile(golden);
     if (!goldenFile.existsSync()) {
-      throw new TestFailure('Could not be compared against non-existent file: "$golden"');
+      throw TestFailure('Could not be compared against non-existent file: "$golden"');
     }
     final List<int> goldenBytes = await goldenFile.readAsBytes();
     // TODO(tvolkert): Improve the intelligence of this comparison.
-    return const ListEquality<int>().equals(goldenBytes, imageBytes);
+    if (goldenBytes.length != imageBytes.length) {
+      return false;
+    }
+    for (int i = 0; i < goldenBytes.length; i++) {
+      if (goldenBytes[i] != imageBytes[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @override

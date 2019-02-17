@@ -55,11 +55,12 @@ class ModalBarrier extends StatelessWidget {
   /// Whether the modal barrier semantics are included in the semantics tree.
   ///
   /// See also:
+  ///
   ///  * [ModalRoute.semanticsDismissible], which controls this property for
   ///    the [ModalBarrier] built by [ModalRoute] pages.
   final bool barrierSemanticsDismissible;
 
-  /// Semantics label used for the barrier if it is [dismissable].
+  /// Semantics label used for the barrier if it is [dismissible].
   ///
   /// The semantics label is read out by accessibility tools (e.g. TalkBack
   /// on Android and VoiceOver on iOS) when the barrier is focused.
@@ -75,24 +76,24 @@ class ModalBarrier extends StatelessWidget {
     assert(!dismissible || semanticsLabel == null || debugCheckHasDirectionality(context));
     final bool semanticsDismissible = dismissible && defaultTargetPlatform != TargetPlatform.android;
     final bool modalBarrierSemanticsDismissible = barrierSemanticsDismissible ?? semanticsDismissible;
-    return new BlockSemantics(
-      child: new ExcludeSemantics(
+    return BlockSemantics(
+      child: ExcludeSemantics(
         // On Android, the back button is used to dismiss a modal. On iOS, some
         // modal barriers are not dismissible in accessibility mode.
         excluding: !semanticsDismissible || !modalBarrierSemanticsDismissible,
-        child: new GestureDetector(
+        child: GestureDetector(
           onTapDown: (TapDownDetails details) {
             if (dismissible)
-              Navigator.pop(context);
+              Navigator.maybePop(context);
           },
           behavior: HitTestBehavior.opaque,
-          child: new Semantics(
+          child: Semantics(
             label: semanticsDismissible ? semanticsLabel : null,
             textDirection: semanticsDismissible && semanticsLabel != null ? Directionality.of(context) : null,
-            child: new ConstrainedBox(
+            child: ConstrainedBox(
               constraints: const BoxConstraints.expand(),
-              child: color == null ? null : new DecoratedBox(
-                decoration: new BoxDecoration(
+              child: color == null ? null : DecoratedBox(
+                decoration: BoxDecoration(
                   color: color,
                 )
               )
@@ -146,7 +147,7 @@ class AnimatedModalBarrier extends AnimatedWidget {
   ///    [AnimatedModalBarrier] built by [ModalRoute] pages.
   final bool dismissible;
 
-  /// Semantics label used for the barrier if it is [dismissable].
+  /// Semantics label used for the barrier if it is [dismissible].
   ///
   /// The semantics label is read out by accessibility tools (e.g. TalkBack
   /// on Android and VoiceOver on iOS) when the barrier is focused.
@@ -159,13 +160,14 @@ class AnimatedModalBarrier extends AnimatedWidget {
   /// Whether the modal barrier semantics are included in the semantics tree.
   ///
   /// See also:
+  ///
   ///  * [ModalRoute.semanticsDismissible], which controls this property for
   ///    the [ModalBarrier] built by [ModalRoute] pages.
   final bool barrierSemanticsDismissible;
 
   @override
   Widget build(BuildContext context) {
-    return new ModalBarrier(
+    return ModalBarrier(
       color: color?.value,
       dismissible: dismissible,
       semanticsLabel: semanticsLabel,

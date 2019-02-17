@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 class Priority {
   const Priority._(this._value);
 
-  /// The integer that describes this Priority value.
+  /// Integer that describes this Priority value.
   int get value => _value;
   final int _value;
 
@@ -39,7 +39,7 @@ class Priority {
       // Clamp the input offset.
       offset = kMaxOffset * offset.sign;
     }
-    return new Priority._(_value + offset);
+    return Priority._(_value + offset);
   }
 
   /// Returns a priority relative to this priority.

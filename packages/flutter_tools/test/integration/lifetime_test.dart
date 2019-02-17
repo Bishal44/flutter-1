@@ -6,14 +6,11 @@ import 'dart:async';
 
 import 'package:file/file.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
-import 'package:flutter_tools/src/base/platform.dart';
-import 'package:test/test.dart';
 
+import '../src/common.dart';
 import 'test_data/basic_project.dart';
 import 'test_driver.dart';
-
-BasicProject _project = new BasicProject();
-FlutterTestDriver _flutter;
+import 'test_utils.dart';
 
 /// This duration is arbitrary but is ideally:
 /// a) long enough to ensure that if the app is crashing at startup, we notice
@@ -22,28 +19,31 @@ const Duration requiredLifespan = Duration(seconds: 5);
 
 void main() {
   group('flutter run', () {
+    final BasicProject _project = BasicProject();
+    FlutterRunTestDriver _flutter;
+    Directory tempDir;
+
     setUp(() async {
-      final Directory tempDir = await fs.systemTempDirectory.createTemp('test_app');
+      tempDir = createResolvedTempDirectorySync('lifetime_test.');
       await _project.setUpIn(tempDir);
-      _flutter = new FlutterTestDriver(tempDir);
+      _flutter = FlutterRunTestDriver(tempDir);
     });
 
     tearDown(() async {
       await _flutter.stop();
-      _project.cleanup();
+      tryToDelete(tempDir);
     });
 
     test('does not terminate when a debugger is attached', () async {
       await _flutter.run(withDebugger: true);
-      await new Future<void>.delayed(requiredLifespan);
+      await Future<void>.delayed(requiredLifespan);
       expect(_flutter.hasExited, equals(false));
     });
 
     test('does not terminate when a debugger is attached and pause-on-exceptions', () async {
       await _flutter.run(withDebugger: true, pauseOnExceptions: true);
-      await new Future<void>.delayed(requiredLifespan);
+      await Future<void>.delayed(requiredLifespan);
       expect(_flutter.hasExited, equals(false));
     });
-    // TODO(dantup): Unskip after https://github.com/flutter/flutter/issues/17833.
-  }, timeout: const Timeout.factor(3), skip: platform.isWindows);
+  }, timeout: const Timeout.factor(10)); // The DevFS sync takes a really long time, so these tests can be slow.
 }

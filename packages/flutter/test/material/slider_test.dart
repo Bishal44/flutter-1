@@ -26,40 +26,42 @@ class LoggingThumbShape extends SliderComponentShape {
 
   @override
   void paint(
-    PaintingContext context,
-    Offset thumbCenter, {
-    Animation<double> activationAnimation,
-    Animation<double> enableAnimation,
-    bool isDiscrete,
-    TextPainter labelPainter,
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    TextDirection textDirection,
-    double value,
-  }) {
+      PaintingContext context,
+      Offset thumbCenter, {
+      Animation<double> activationAnimation,
+      Animation<double> enableAnimation,
+      bool isEnabled,
+      bool isDiscrete,
+      bool onActiveTrack,
+      TextPainter labelPainter,
+      RenderBox parentBox,
+      SliderThemeData sliderTheme,
+      TextDirection textDirection,
+      double value,
+    }) {
     log.add(thumbCenter);
-    final Paint thumbPaint = new Paint()..color = Colors.red;
+    final Paint thumbPaint = Paint()..color = Colors.red;
     context.canvas.drawCircle(thumbCenter, 5.0, thumbPaint);
   }
 }
 
 void main() {
   testWidgets('Slider can move when tapped (LTR)', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     double startValue;
     double endValue;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     onChanged: (double newValue) {
@@ -105,19 +107,19 @@ void main() {
   });
 
   testWidgets('Slider can move when tapped (RTL)', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.rtl,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     onChanged: (double newValue) {
@@ -151,7 +153,7 @@ void main() {
   });
 
   testWidgets("Slider doesn't send duplicate change events if tapped on the same value", (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     double startValue;
     double endValue;
@@ -160,15 +162,15 @@ void main() {
     int endValueUpdates = 0;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     onChanged: (double newValue) {
@@ -209,19 +211,19 @@ void main() {
   });
 
   testWidgets('Value indicator shows for a bit after being tapped', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     divisions: 4,
@@ -260,23 +262,23 @@ void main() {
   });
 
   testWidgets('Discrete Slider repaints and animates when dragged', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     final List<Offset> log = <Offset>[];
-    final LoggingThumbShape loggingThumb = new LoggingThumbShape(log);
+    final LoggingThumbShape loggingThumb = LoggingThumbShape(log);
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             final SliderThemeData sliderTheme = SliderTheme.of(context).copyWith(thumbShape: loggingThumb);
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new SliderTheme(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: SliderTheme(
                     data: sliderTheme,
-                    child: new Slider(
+                    child: Slider(
                       key: sliderKey,
                       value: value,
                       divisions: 4,
@@ -329,20 +331,20 @@ void main() {
   });
 
   testWidgets("Slider doesn't send duplicate change events if tapped on the same value", (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     int updates = 0;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     onChanged: (double newValue) {
@@ -371,23 +373,23 @@ void main() {
   });
 
   testWidgets('discrete Slider repaints when dragged', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     final List<Offset> log = <Offset>[];
-    final LoggingThumbShape loggingThumb = new LoggingThumbShape(log);
+    final LoggingThumbShape loggingThumb = LoggingThumbShape(log);
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             final SliderThemeData sliderTheme = SliderTheme.of(context).copyWith(thumbShape: loggingThumb);
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new SliderTheme(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: SliderTheme(
                     data: sliderTheme,
-                    child: new Slider(
+                    child: Slider(
                       key: sliderKey,
                       value: value,
                       divisions: 4,
@@ -440,21 +442,21 @@ void main() {
   });
 
   testWidgets('Slider take on discrete values', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
 
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new SizedBox(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: SizedBox(
                     width: 144.0 + 2 * 16.0, // _kPreferredTotalWidth
-                    child: new Slider(
+                    child: Slider(
                       key: sliderKey,
                       min: 0.0,
                       max: 100.0,
@@ -495,12 +497,12 @@ void main() {
 
   testWidgets('Slider can be given zero values', (WidgetTester tester) async {
     final List<double> log = <double>[];
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Slider(
             value: 0.0,
             min: 0.0,
             max: 1.0,
@@ -516,12 +518,12 @@ void main() {
     expect(log, <double>[0.5]);
     log.clear();
 
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Slider(
             value: 0.0,
             min: 0.0,
             max: 0.0,
@@ -541,7 +543,7 @@ void main() {
   testWidgets('Slider uses the right theme colors for the right components', (WidgetTester tester) async {
     const Color customColor1 = Color(0xcafefeed);
     const Color customColor2 = Color(0xdeadbeef);
-    final ThemeData theme = new ThemeData(
+    final ThemeData theme = ThemeData(
       platform: TargetPlatform.android,
       primarySwatch: Colors.blue,
     );
@@ -558,15 +560,15 @@ void main() {
           : (double d) {
               value = d;
             };
-      return new Directionality(
+      return Directionality(
         textDirection: TextDirection.ltr,
-        child: new MediaQuery(
-          data: new MediaQueryData.fromWindow(window),
-          child: new Material(
-            child: new Center(
-              child: new Theme(
+        child: MediaQuery(
+          data: MediaQueryData.fromWindow(window),
+          child: Material(
+            child: Center(
+              child: Theme(
                 data: theme,
-                child: new Slider(
+                child: Slider(
                   value: value,
                   label: '$value',
                   divisions: divisions,
@@ -720,34 +722,35 @@ void main() {
     expect(
       sliderBox,
       paints
-        ..rect(color: customColor1)
-        ..rect(color: customColor2)
-        ..circle(color: customColor1.withAlpha(0x29))
-        ..circle(color: customColor2)
-        ..circle(color: customColor2)
-        ..circle(color: customColor1)
-        ..path(color: customColor1)
-        ..circle(color: customColor1),
+        ..rect(color: customColor1) // active track
+        ..rect(color: customColor2) // inactive track
+        ..circle(color: customColor1.withAlpha(0x29)) // overlay
+        ..circle(color: customColor2) // 1st tick mark
+        ..circle(color: customColor2) // 2nd tick mark
+        ..circle(color: customColor2) // 3rd tick mark
+        ..circle(color: customColor1) // 4th tick mark
+        ..path(color: customColor1) // indicator
+        ..circle(color: customColor1), // thumb
     );
     await gesture.up();
   });
 
   testWidgets('Slider can tap in vertical scroller', (WidgetTester tester) async {
     double value = 0.0;
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new ListView(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: ListView(
             children: <Widget>[
-              new Slider(
+              Slider(
                 value: value,
                 onChanged: (double newValue) {
                   value = newValue;
                 },
               ),
-              new Container(
+              Container(
                 height: 2000.0,
               ),
             ],
@@ -762,13 +765,13 @@ void main() {
 
   testWidgets('Slider drags immediately (LTR)', (WidgetTester tester) async {
     double value = 0.0;
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Center(
-            child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Center(
+            child: Slider(
               value: value,
               onChanged: (double newValue) {
                 value = newValue;
@@ -793,13 +796,13 @@ void main() {
 
   testWidgets('Slider drags immediately (RTL)', (WidgetTester tester) async {
     double value = 0.0;
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.rtl,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Center(
-            child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Center(
+            child: Slider(
               value: value,
               onChanged: (double newValue) {
                 value = newValue;
@@ -823,10 +826,10 @@ void main() {
   });
 
   testWidgets('Slider sizing', (WidgetTester tester) async {
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
         child: const Material(
           child: Center(
             child: Slider(
@@ -839,10 +842,10 @@ void main() {
     ));
     expect(tester.renderObject<RenderBox>(find.byType(Slider)).size, const Size(800.0, 600.0));
 
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
         child: const Material(
           child: Center(
             child: IntrinsicWidth(
@@ -857,10 +860,10 @@ void main() {
     ));
     expect(tester.renderObject<RenderBox>(find.byType(Slider)).size, const Size(144.0 + 2.0 * 16.0, 600.0));
 
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
         child: const Material(
           child: Center(
             child: OverflowBox(
@@ -879,7 +882,7 @@ void main() {
   });
 
   testWidgets('Slider respects textScaleFactor', (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
 
     Widget buildSlider({
@@ -887,22 +890,22 @@ void main() {
       bool isDiscrete = true,
       ShowValueIndicator show = ShowValueIndicator.onlyForDiscrete,
     }) {
-      return new Directionality(
+      return Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData(textScaleFactor: textScaleFactor),
-              child: new Material(
-                child: new Theme(
+            return MediaQuery(
+              data: MediaQueryData(textScaleFactor: textScaleFactor),
+              child: Material(
+                child: Theme(
                   data: Theme.of(context).copyWith(
-                        sliderTheme: Theme.of(context).sliderTheme.copyWith(showValueIndicator: show),
-                      ),
-                  child: new Center(
-                    child: new OverflowBox(
+                    sliderTheme: Theme.of(context).sliderTheme.copyWith(showValueIndicator: show),
+                  ),
+                  child: Center(
+                    child: OverflowBox(
                       maxWidth: double.infinity,
                       maxHeight: double.infinity,
-                      child: new Slider(
+                      child: Slider(
                         key: sliderKey,
                         min: 0.0,
                         max: 100.0,
@@ -976,12 +979,12 @@ void main() {
   });
 
   testWidgets('Slider has correct animations when reparented', (WidgetTester tester) async {
-    final Key sliderKey = new GlobalKey(debugLabel: 'A');
+    final Key sliderKey = GlobalKey(debugLabel: 'A');
     double value = 0.0;
 
     Widget buildSlider(int parents) {
       Widget createParents(int parents, StateSetter setState) {
-        Widget slider = new Slider(
+        Widget slider = Slider(
           key: sliderKey,
           value: value,
           divisions: 4,
@@ -993,18 +996,18 @@ void main() {
         );
 
         for (int i = 0; i < parents; ++i) {
-          slider = new Column(children: <Widget>[slider]);
+          slider = Column(children: <Widget>[slider]);
         }
         return slider;
       }
 
-      return new Directionality(
+      return Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
                 child: createParents(parents, setState),
               ),
             );
@@ -1013,7 +1016,7 @@ void main() {
       );
     }
 
-    Future<Null> testReparenting(bool reparent) async {
+    Future<void> testReparenting(bool reparent) async {
       final RenderBox sliderBox = tester.firstRenderObject<RenderBox>(find.byType(Slider));
       final Offset center = tester.getCenter(find.byType(Slider));
       // Move to 0.0.
@@ -1025,6 +1028,7 @@ void main() {
       expect(
         sliderBox,
         paints
+          ..circle(x: 17.0, y: 16.0, radius: 1.0)
           ..circle(x: 208.5, y: 16.0, radius: 1.0)
           ..circle(x: 400.0, y: 16.0, radius: 1.0)
           ..circle(x: 591.5, y: 16.0, radius: 1.0)
@@ -1077,6 +1081,7 @@ void main() {
           ..circle(x: 400.0, y: 16.0, radius: 16.0)
           ..circle(x: 17.0, y: 16.0, radius: 1.0)
           ..circle(x: 208.5, y: 16.0, radius: 1.0)
+          ..circle(x: 400.0, y: 16.0, radius: 1.0)
           ..circle(x: 591.5, y: 16.0, radius: 1.0)
           ..circle(x: 783.0, y: 16.0, radius: 1.0)
           ..circle(x: 400.0, y: 16.0, radius: 6.0),
@@ -1089,6 +1094,7 @@ void main() {
         paints
           ..circle(x: 17.0, y: 16.0, radius: 1.0)
           ..circle(x: 208.5, y: 16.0, radius: 1.0)
+          ..circle(x: 400.0, y: 16.0, radius: 1.0)
           ..circle(x: 591.5, y: 16.0, radius: 1.0)
           ..circle(x: 783.0, y: 16.0, radius: 1.0)
           ..circle(x: 400.0, y: 16.0, radius: 6.0),
@@ -1103,14 +1109,14 @@ void main() {
   });
 
   testWidgets('Slider Semantics', (WidgetTester tester) async {
-    final SemanticsTester semantics = new SemanticsTester(tester);
+    final SemanticsTester semantics = SemanticsTester(tester);
 
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Slider(
             value: 0.5,
             onChanged: (double v) {},
           ),
@@ -1121,8 +1127,8 @@ void main() {
     expect(
         semantics,
         hasSemantics(
-          new TestSemantics.root(children: <TestSemantics>[
-            new TestSemantics.rootChild(
+          TestSemantics.root(children: <TestSemantics>[
+            TestSemantics.rootChild(
               id: 1,
               value: '50%',
               increasedValue: '55%',
@@ -1136,10 +1142,10 @@ void main() {
         ));
 
     // Disable slider
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
         child: const Material(
           child: Slider(
             value: 0.5,
@@ -1152,7 +1158,7 @@ void main() {
     expect(
         semantics,
         hasSemantics(
-          new TestSemantics.root(),
+          TestSemantics.root(),
           ignoreRect: true,
           ignoreTransform: true,
         ));
@@ -1161,19 +1167,19 @@ void main() {
   });
 
   testWidgets('Slider Semantics - iOS', (WidgetTester tester) async {
-    final SemanticsTester semantics = new SemanticsTester(tester);
+    final SemanticsTester semantics = SemanticsTester(tester);
 
     await tester.pumpWidget(
-      new Theme(
+      Theme(
         data: ThemeData.light().copyWith(
           platform: TargetPlatform.iOS,
         ),
-        child: new Directionality(
+        child: Directionality(
           textDirection: TextDirection.ltr,
-          child: new MediaQuery(
-            data: new MediaQueryData.fromWindow(window),
-            child: new Material(
-              child: new Slider(
+          child: MediaQuery(
+            data: MediaQueryData.fromWindow(window),
+            child: Material(
+              child: Slider(
                 value: 100.0,
                 min: 0.0,
                 max: 200.0,
@@ -1188,8 +1194,8 @@ void main() {
     expect(
       semantics,
       hasSemantics(
-        new TestSemantics.root(children: <TestSemantics>[
-          new TestSemantics.rootChild(
+        TestSemantics.root(children: <TestSemantics>[
+          TestSemantics.rootChild(
             id: 2,
             value: '50%',
             increasedValue: '60%',
@@ -1205,14 +1211,14 @@ void main() {
   });
 
   testWidgets('Slider semantics with custom formatter', (WidgetTester tester) async {
-    final SemanticsTester semantics = new SemanticsTester(tester);
+    final SemanticsTester semantics = SemanticsTester(tester);
 
-    await tester.pumpWidget(new Directionality(
+    await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: new MediaQuery(
-        data: new MediaQueryData.fromWindow(window),
-        child: new Material(
-          child: new Slider(
+      child: MediaQuery(
+        data: MediaQueryData.fromWindow(window),
+        child: Material(
+          child: Slider(
             value: 40.0,
             min: 0.0,
             max: 200.0,
@@ -1227,8 +1233,8 @@ void main() {
     expect(
         semantics,
         hasSemantics(
-          new TestSemantics.root(children: <TestSemantics>[
-            new TestSemantics.rootChild(
+          TestSemantics.root(children: <TestSemantics>[
+            TestSemantics.rootChild(
               id: 3,
               value: '40',
               increasedValue: '60',
@@ -1244,7 +1250,7 @@ void main() {
   });
 
   testWidgets('Value indicator appears when it should', (WidgetTester tester) async {
-    final ThemeData baseTheme = new ThemeData(
+    final ThemeData baseTheme = ThemeData(
       platform: TargetPlatform.android,
       primarySwatch: Colors.blue,
     );
@@ -1252,17 +1258,17 @@ void main() {
     double value = 0.45;
     Widget buildApp({SliderThemeData sliderTheme, int divisions, bool enabled = true}) {
       final ValueChanged<double> onChanged = enabled ? (double d) => value = d : null;
-      return new Directionality(
+      return Directionality(
         textDirection: TextDirection.ltr,
-        child: new MediaQuery(
-          data: new MediaQueryData.fromWindow(window),
-          child: new Material(
-            child: new Center(
-              child: new Theme(
+        child: MediaQuery(
+          data: MediaQueryData.fromWindow(window),
+          child: Material(
+            child: Center(
+              child: Theme(
                 data: baseTheme,
-                child: new SliderTheme(
+                child: SliderTheme(
                   data: sliderTheme,
-                  child: new Slider(
+                  child: Slider(
                     value: value,
                     label: '$value',
                     divisions: divisions,
@@ -1276,7 +1282,7 @@ void main() {
       );
     }
 
-    Future<Null> expectValueIndicator({
+    Future<void> expectValueIndicator({
       bool isVisible,
       SliderThemeData theme,
       int divisions,
@@ -1328,18 +1334,18 @@ void main() {
   });
 
   testWidgets("Slider doesn't start any animations after dispose", (WidgetTester tester) async {
-    final Key sliderKey = new UniqueKey();
+    final Key sliderKey = UniqueKey();
     double value = 0.0;
     await tester.pumpWidget(
-      new Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
-        child: new StatefulBuilder(
+        child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return new MediaQuery(
-              data: new MediaQueryData.fromWindow(window),
-              child: new Material(
-                child: new Center(
-                  child: new Slider(
+            return MediaQuery(
+              data: MediaQueryData.fromWindow(window),
+              child: Material(
+                child: Center(
+                  child: Slider(
                     key: sliderKey,
                     value: value,
                     divisions: 4,
@@ -1363,7 +1369,7 @@ void main() {
     await gesture.moveBy(const Offset(-500.0, 0.0));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
     // Change the tree to dispose the original widget.
-    await tester.pumpWidget(new Container());
+    await tester.pumpWidget(Container());
     expect(await tester.pumpAndSettle(const Duration(milliseconds: 100)), equals(1));
     await gesture.up();
   });

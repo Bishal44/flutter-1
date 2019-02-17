@@ -27,23 +27,23 @@ const List<String> _kRequiredOptions = <String>[
   _kOptionPackages,
   _kOptionAsset,
   _kOptionAssetManifestOut,
+  _kOptionComponentName,
 ];
 
-Future<Null> main(List<String> args) {
-  return runInContext<Null>(() => run(args), overrides: <Type, Generator>{
-    Usage: () => new DisabledUsage(),
+Future<void> main(List<String> args) {
+  return runInContext<void>(() => run(args), overrides: <Type, Generator>{
+    Usage: () => DisabledUsage(),
   });
 }
 
-Future<Null> writeFile(libfs.File outputFile, DevFSContent content) async {
+Future<void> writeFile(libfs.File outputFile, DevFSContent content) async {
   outputFile.createSync(recursive: true);
   final List<int> data = await content.contentsAsBytes();
   outputFile.writeAsBytesSync(data);
-  return null;
 }
 
-Future<Null> run(List<String> args) async {
-  final ArgParser parser = new ArgParser()
+Future<void> run(List<String> args) async {
+  final ArgParser parser = ArgParser()
     ..addOption(_kOptionPackages, help: 'The .packages file')
     ..addOption(_kOptionAsset,
         help: 'The directory where to put temporary files')
@@ -71,28 +71,25 @@ Future<Null> run(List<String> args) async {
     exit(1);
   }
 
-  final List<Future<Null>> calls = <Future<Null>>[];
+  final List<Future<void>> calls = <Future<void>>[];
   assets.entries.forEach((String fileName, DevFSContent content) {
     final libfs.File outputFile = libfs.fs.file(libfs.fs.path.join(assetDir, fileName));
     calls.add(writeFile(outputFile, content));
   });
-  await Future.wait(calls);
+  await Future.wait<void>(calls);
 
   final String outputMan = argResults[_kOptionAssetManifestOut];
   await writeFuchsiaManifest(assets, argResults[_kOptionAsset], outputMan, argResults[_kOptionComponentName]);
 }
 
-Future<Null> writeFuchsiaManifest(AssetBundle assets, String outputBase, String fileDest, String componentName) async {
+Future<void> writeFuchsiaManifest(AssetBundle assets, String outputBase, String fileDest, String componentName) async {
 
   final libfs.File destFile = libfs.fs.file(fileDest);
   await destFile.create(recursive: true);
   final libfs.IOSink outFile = destFile.openWrite();
 
   for (String path in assets.entries.keys) {
-    outFile.write('data/$path=$outputBase/$path\n');
-    if (componentName.isNotEmpty) {
-      outFile.write('data/$componentName/$path=$outputBase/$path\n');
-    }
+    outFile.write('data/$componentName/$path=$outputBase/$path\n');
   }
   await outFile.flush();
   await outFile.close();

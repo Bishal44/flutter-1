@@ -2,15 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 
 import '../rendering/mock_canvas.dart';
 import 'semantics_tester.dart';
 
 void main() {
   testWidgets('Opacity', (WidgetTester tester) async {
-    final SemanticsTester semantics = new SemanticsTester(tester);
+    final SemanticsTester semantics = SemanticsTester(tester);
 
     // Opacity 1.0: Semantics and painting
     await tester.pumpWidget(
@@ -20,9 +23,9 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             id: 1,
             rect: Rect.fromLTRB(0.0, 0.0, 800.0, 600.0),
             label: 'a',
@@ -41,7 +44,7 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(),
+      TestSemantics.root(),
     ));
     expect(find.byType(Opacity), paintsNothing);
 
@@ -54,9 +57,9 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             id: 1,
             rect: Rect.fromLTRB(0.0, 0.0, 800.0, 600.0),
             label: 'a',
@@ -76,7 +79,7 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(),
+      TestSemantics.root(),
     ));
     expect(find.byType(Opacity), paintsNothing);
 
@@ -88,9 +91,9 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             id: 1,
             rect: Rect.fromLTRB(0.0, 0.0, 800.0, 600.0),
             label: 'a',
@@ -110,9 +113,9 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             id: 1,
             rect: Rect.fromLTRB(0.0, 0.0, 800.0, 600.0),
             label: 'a',
@@ -132,9 +135,9 @@ void main() {
       ),
     );
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             id: 1,
             rect: Rect.fromLTRB(0.0, 0.0, 800.0, 600.0),
             label: 'a',
@@ -146,5 +149,38 @@ void main() {
     expect(find.byType(Opacity), paints..paragraph());
 
     semantics.dispose();
+  });
+
+  testWidgets('offset is correctly handled in Opacity', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RepaintBoundary(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: List<Widget>.generate(10, (int index) {
+                  return Opacity(
+                    opacity: 0.5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Container(
+                          color: Colors.blue,
+                          height: 50
+                      ),
+                    )
+                  );
+                }),
+              ),
+            )
+          )
+        )
+      )
+    );
+    await expectLater(
+      find.byType(RepaintBoundary).first,
+      matchesGoldenFile('opacity_test.offset.1.png'),
+      skip: !Platform.isLinux,
+    );
   });
 }

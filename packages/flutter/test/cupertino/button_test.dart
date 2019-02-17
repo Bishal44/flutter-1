@@ -12,6 +12,7 @@ import '../widgets/semantics_tester.dart';
 const TextStyle testStyle = TextStyle(
   fontFamily: 'Ahem',
   fontSize: 10.0,
+  letterSpacing: 0.0,
 );
 
 void main() {
@@ -92,10 +93,10 @@ void main() {
   testWidgets('Button takes taps', (WidgetTester tester) async {
     bool value = false;
     await tester.pumpWidget(
-      new StatefulBuilder(
+      StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
           return boilerplate(
-            child: new CupertinoButton(
+            child: CupertinoButton(
               child: const Text('Tap me'),
               onPressed: () {
                 setState(() {
@@ -129,7 +130,7 @@ void main() {
   });
 
   testWidgets('pressedOpacity defaults to 0.1', (WidgetTester tester) async {
-    await tester.pumpWidget(boilerplate(child: new CupertinoButton(
+    await tester.pumpWidget(boilerplate(child: CupertinoButton(
       child: const Text('Tap me'),
       onPressed: () { },
     )));
@@ -149,7 +150,7 @@ void main() {
 
   testWidgets('pressedOpacity parameter', (WidgetTester tester) async {
     const double pressedOpacity = 0.5;
-    await tester.pumpWidget(boilerplate(child: new CupertinoButton(
+    await tester.pumpWidget(boilerplate(child: CupertinoButton(
       pressedOpacity: pressedOpacity,
       child: const Text('Tap me'),
       onPressed: () { },
@@ -169,11 +170,11 @@ void main() {
   });
 
   testWidgets('Cupertino button is semantically a button', (WidgetTester tester) async {
-    final SemanticsTester semantics = new SemanticsTester(tester);
+    final SemanticsTester semantics = SemanticsTester(tester);
     await tester.pumpWidget(
       boilerplate(
-          child: new Center(
-            child: new CupertinoButton(
+          child: Center(
+            child: CupertinoButton(
               onPressed: () { },
               child: const Text('ABC')
             ),
@@ -182,9 +183,9 @@ void main() {
     );
 
     expect(semantics, hasSemantics(
-      new TestSemantics.root(
+      TestSemantics.root(
         children: <TestSemantics>[
-          new TestSemantics.rootChild(
+          TestSemantics.rootChild(
             actions: SemanticsAction.tap.index,
             label: 'ABC',
             flags: SemanticsFlag.isButton.index,
@@ -200,7 +201,7 @@ void main() {
   });
 
   testWidgets('Can specify colors', (WidgetTester tester) async {
-    await tester.pumpWidget(boilerplate(child: new CupertinoButton(
+    await tester.pumpWidget(boilerplate(child: CupertinoButton(
       child: const Text('Skeuomorph me'),
       color: const Color(0x0000FF),
       disabledColor: const Color(0x00FF00),
@@ -226,11 +227,85 @@ void main() {
 
     expect(boxDecoration.color, const Color(0x00FF00));
   });
+
+  testWidgets('Botton respects themes', (WidgetTester tester) async {
+    TextStyle textStyle;
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: CupertinoButton(
+          onPressed: () {},
+          child: Builder(builder: (BuildContext context) {
+            textStyle = DefaultTextStyle.of(context).style;
+            return const Placeholder();
+          }),
+        ),
+      ),
+    );
+
+    expect(textStyle.color, CupertinoColors.activeBlue);
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: CupertinoButton.filled(
+          onPressed: () {},
+          child: Builder(builder: (BuildContext context) {
+            textStyle = DefaultTextStyle.of(context).style;
+            return const Placeholder();
+          }),
+        ),
+      ),
+    );
+
+    expect(textStyle.color, CupertinoColors.white);
+    BoxDecoration decoration = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(CupertinoButton),
+        matching: find.byType(DecoratedBox)
+      )
+    ).decoration;
+    expect(decoration.color, CupertinoColors.activeBlue);
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        theme: const CupertinoThemeData(brightness: Brightness.dark),
+        home: CupertinoButton(
+          onPressed: () {},
+          child: Builder(builder: (BuildContext context) {
+            textStyle = DefaultTextStyle.of(context).style;
+            return const Placeholder();
+          }),
+        ),
+      ),
+    );
+    expect(textStyle.color, CupertinoColors.activeOrange);
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        theme: const CupertinoThemeData(brightness: Brightness.dark),
+        home: CupertinoButton.filled(
+          onPressed: () {},
+          child: Builder(builder: (BuildContext context) {
+            textStyle = DefaultTextStyle.of(context).style;
+            return const Placeholder();
+          }),
+        ),
+      ),
+    );
+    expect(textStyle.color, CupertinoColors.black);
+    decoration = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(CupertinoButton),
+        matching: find.byType(DecoratedBox)
+      )
+    ).decoration;
+    expect(decoration.color, CupertinoColors.activeOrange);
+  });
 }
 
 Widget boilerplate({ Widget child }) {
-  return new Directionality(
+  return Directionality(
     textDirection: TextDirection.ltr,
-    child: new Center(child: child),
+    child: Center(child: child),
   );
 }

@@ -3,18 +3,18 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:convert' as convert;
 
 import 'package:json_schema/json_schema.dart';
 import 'package:meta/meta.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:yaml/yaml.dart';
 
 import 'base/file_system.dart';
+import 'base/user_messages.dart';
 import 'base/utils.dart';
 import 'cache.dart';
+import 'convert.dart' as convert;
 import 'globals.dart';
-
-final RegExp _versionPattern = new RegExp(r'^(\d+)(\.(\d+)(\.(\d+))?)?(\+(\d+))?$');
 
 /// A wrapper around the `flutter` section in the `pubspec.yaml` file.
 class FlutterManifest {
@@ -22,7 +22,7 @@ class FlutterManifest {
 
   /// Returns an empty manifest.
   static FlutterManifest empty() {
-    final FlutterManifest manifest = new FlutterManifest._();
+    final FlutterManifest manifest = FlutterManifest._();
     manifest._descriptor = const <String, dynamic>{};
     manifest._flutterDescriptor = const <String, dynamic>{};
     return manifest;
@@ -43,7 +43,7 @@ class FlutterManifest {
   }
 
   static Future<FlutterManifest> _createFromYaml(dynamic yamlDocument) async {
-    final FlutterManifest pubspec = new FlutterManifest._();
+    final FlutterManifest pubspec = FlutterManifest._();
     if (yamlDocument != null && !await _validate(yamlDocument))
       return null;
 
@@ -76,14 +76,27 @@ class FlutterManifest {
   /// The string value of the top-level `name` property in the `pubspec.yaml` file.
   String get appName => _descriptor['name'] ?? '';
 
+  // Flag to avoid printing multiple invalid version messages.
+  bool _hasShowInvalidVersionMsg = false;
+
   /// The version String from the `pubspec.yaml` file.
   /// Can be null if it isn't set or has a wrong format.
   String get appVersion {
-    final String version = _descriptor['version']?.toString();
-    if (version != null && _versionPattern.hasMatch(version))
-      return version;
-    else
+    final String verStr = _descriptor['version']?.toString();
+    if (verStr == null) {
       return null;
+    }
+
+    Version version;
+    try {
+      version = Version.parse(verStr);
+    } on Exception {
+      if (!_hasShowInvalidVersionMsg) {
+        printStatus(userMessages.invalidVersionSettingHintMessage(verStr), emphasis: true);
+        _hasShowInvalidVersionMsg = true;
+      }
+    }
+    return version?.toString();
   }
 
   /// The build version name from the `pubspec.yaml` file.
@@ -91,16 +104,17 @@ class FlutterManifest {
   String get buildName {
     if (appVersion != null && appVersion.contains('+'))
       return appVersion.split('+')?.elementAt(0);
-    else
+    else {
       return appVersion;
+    }
   }
 
   /// The build version number from the `pubspec.yaml` file.
   /// Can be null if version isn't set or has a wrong format.
-  int get buildNumber {
+  String get buildNumber {
     if (appVersion != null && appVersion.contains('+')) {
       final String value = appVersion.split('+')?.elementAt(1);
-      return value == null ? null : int.tryParse(value);
+      return value;
     } else {
       return null;
     }
@@ -114,7 +128,7 @@ class FlutterManifest {
   ///
   /// A Flutter project is considered a module when it has a `module:`
   /// descriptor. A Flutter module project supports integration into an
-  /// existing host app.
+  /// existing host app, and has managed platform host code.
   ///
   /// Such a project can be created using `flutter create -t module`.
   bool get isModule => _flutterDescriptor.containsKey('module');
@@ -140,7 +154,19 @@ class FlutterManifest {
     return null;
   }
 
+  /// Returns the iOS bundle identifier declared by this manifest in its
+  /// module descriptor. Returns null if there is no such declaration.
+  String get iosBundleIdentifier {
+    if (isModule)
+      return _flutterDescriptor['module']['iosBundleIdentifier'];
+    return null;
+  }
+
   List<Map<String, dynamic>> get fontsDescriptor {
+    return fonts.map((Font font) => font.descriptor).toList();
+  }
+
+  List<Map<String, dynamic>> get _rawFontsDescriptor {
     final List<dynamic> fontList = _flutterDescriptor['fonts'];
     return fontList == null
         ? const <Map<String, dynamic>>[]
@@ -171,7 +197,7 @@ class FlutterManifest {
       return <Font>[];
 
     final List<Font> fonts = <Font>[];
-    for (Map<String, dynamic> fontFamily in fontsDescriptor) {
+    for (Map<String, dynamic> fontFamily in _rawFontsDescriptor) {
       final List<dynamic> fontFiles = fontFamily['fonts'];
       final String familyName = fontFamily['family'];
       if (familyName == null) {
@@ -191,14 +217,14 @@ class FlutterManifest {
           continue;
         }
 
-        fontAssets.add(new FontAsset(
+        fontAssets.add(FontAsset(
           Uri.parse(asset),
           weight: fontFile['weight'],
           style: fontFile['style'],
         ));
       }
       if (fontAssets.isNotEmpty)
-        fonts.add(new Font(fontFamily['family'], fontAssets));
+        fonts.add(Font(fontFamily['family'], fontAssets));
     }
     return fonts;
   }
@@ -216,7 +242,7 @@ class Font {
   Map<String, dynamic> get descriptor {
     return <String, dynamic>{
       'family': familyName,
-      'fonts': fontAssets.map((FontAsset a) => a.descriptor).toList(),
+      'fonts': fontAssets.map<Map<String, dynamic>>((FontAsset a) => a.descriptor).toList(),
     };
   }
 
@@ -269,7 +295,7 @@ Future<bool> _validate(dynamic manifest) async {
   final String schemaData = fs.file(schemaPath).readAsStringSync();
   final Schema schema = await Schema.createSchema(
       convert.json.decode(schemaData));
-  final Validator validator = new Validator(schema);
+  final Validator validator = Validator(schema);
   if (validator.validate(manifest)) {
     return true;
   } else {

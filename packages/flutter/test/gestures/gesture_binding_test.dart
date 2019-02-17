@@ -6,25 +6,27 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:test/test.dart';
 
-typedef void HandleEventCallback(PointerEvent event);
+import '../flutter_test_alternative.dart';
+
+typedef HandleEventCallback = void Function(PointerEvent event);
 
 class TestGestureFlutterBinding extends BindingBase with GestureBinding {
   HandleEventCallback callback;
 
   @override
   void handleEvent(PointerEvent event, HitTestEntry entry) {
+    super.handleEvent(event, entry);
     if (callback != null)
       callback(event);
-    super.handleEvent(event, entry);
   }
 }
 
-TestGestureFlutterBinding _binding = new TestGestureFlutterBinding();
+TestGestureFlutterBinding _binding = TestGestureFlutterBinding();
 
 void ensureTestGestureBinding() {
-  _binding ??= new TestGestureFlutterBinding();
+  _binding ??= TestGestureFlutterBinding();
+  PointerEventConverter.clearPointers();
   assert(GestureBinding.instance != null);
 }
 
@@ -67,15 +69,43 @@ void main() {
     expect(events[2].runtimeType, equals(PointerUpEvent));
   });
 
+  test('Pointer hover events', () {
+    const ui.PointerDataPacket packet = ui.PointerDataPacket(
+        data: <ui.PointerData>[
+          ui.PointerData(change: ui.PointerChange.hover),
+          ui.PointerData(change: ui.PointerChange.hover),
+          ui.PointerData(change: ui.PointerChange.remove),
+          ui.PointerData(change: ui.PointerChange.hover),
+        ]
+    );
+
+    final List<PointerEvent> pointerRouterEvents = <PointerEvent>[];
+    GestureBinding.instance.pointerRouter.addGlobalRoute(pointerRouterEvents.add);
+
+    final List<PointerEvent> events = <PointerEvent>[];
+    _binding.callback = events.add;
+
+    ui.window.onPointerDataPacket(packet);
+    expect(events.length, 0);
+    expect(pointerRouterEvents.length, 6,
+        reason: 'pointerRouterEvents contains: $pointerRouterEvents');
+    expect(pointerRouterEvents[0].runtimeType, equals(PointerAddedEvent));
+    expect(pointerRouterEvents[1].runtimeType, equals(PointerHoverEvent));
+    expect(pointerRouterEvents[2].runtimeType, equals(PointerHoverEvent));
+    expect(pointerRouterEvents[3].runtimeType, equals(PointerRemovedEvent));
+    expect(pointerRouterEvents[4].runtimeType, equals(PointerAddedEvent));
+    expect(pointerRouterEvents[5].runtimeType, equals(PointerHoverEvent));
+  });
+
   test('Synthetic move events', () {
-    final ui.PointerDataPacket packet = new ui.PointerDataPacket(
+    final ui.PointerDataPacket packet = ui.PointerDataPacket(
       data: <ui.PointerData>[
-        new ui.PointerData(
+        ui.PointerData(
           change: ui.PointerChange.down,
           physicalX: 1.0 * ui.window.devicePixelRatio,
           physicalY: 3.0 * ui.window.devicePixelRatio,
         ),
-        new ui.PointerData(
+        ui.PointerData(
           change: ui.PointerChange.up,
           physicalX: 10.0 * ui.window.devicePixelRatio,
           physicalY: 15.0 * ui.window.devicePixelRatio,
@@ -154,10 +184,10 @@ void main() {
   });
 
   test('Synthetic hover and cancel for misplaced down and remove', () {
-    final ui.PointerDataPacket packet = new ui.PointerDataPacket(
+    final ui.PointerDataPacket packet = ui.PointerDataPacket(
       data: <ui.PointerData>[
-        new ui.PointerData(change: ui.PointerChange.add, device: 25, physicalX: 10.0 * ui.window.devicePixelRatio, physicalY: 10.0 * ui.window.devicePixelRatio),
-        new ui.PointerData(change: ui.PointerChange.down, device: 25, physicalX: 15.0 * ui.window.devicePixelRatio, physicalY: 17.0 * ui.window.devicePixelRatio),
+        ui.PointerData(change: ui.PointerChange.add, device: 25, physicalX: 10.0 * ui.window.devicePixelRatio, physicalY: 10.0 * ui.window.devicePixelRatio),
+        ui.PointerData(change: ui.PointerChange.down, device: 25, physicalX: 15.0 * ui.window.devicePixelRatio, physicalY: 17.0 * ui.window.devicePixelRatio),
         const ui.PointerData(change: ui.PointerChange.remove, device: 25),
       ]
     );

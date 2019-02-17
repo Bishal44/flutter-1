@@ -10,6 +10,7 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+import 'basic.dart';
 import 'framework.dart';
 import 'notification_listener.dart';
 import 'scroll_context.dart';
@@ -29,6 +30,7 @@ import 'scrollable.dart';
 /// during that stage.
 ///
 /// See also:
+///
 ///  * [ListWheelChildListDelegate], a delegate that supplies children using an
 ///    explicit list.
 ///  * [ListWheelChildLoopingListDelegate], a delegate that supplies infinite
@@ -91,7 +93,7 @@ class ListWheelChildListDelegate extends ListWheelChildDelegate {
   Widget build(BuildContext context, int index) {
     if (index < 0 || index >= children.length)
       return null;
-    return children[index];
+    return IndexedSemantics(child: children[index], index: index);
   }
 
   @override
@@ -137,7 +139,7 @@ class ListWheelChildLoopingListDelegate extends ListWheelChildDelegate {
   Widget build(BuildContext context, int index) {
     if (children.isEmpty)
       return null;
-    return children[index % children.length];
+    return IndexedSemantics(child: children[index % children.length], index: index);
   }
 
   @override
@@ -178,11 +180,13 @@ class ListWheelChildBuilderDelegate extends ListWheelChildDelegate {
 
   @override
   Widget build(BuildContext context, int index) {
-    if (childCount == null)
-      return builder(context, index);
+    if (childCount == null) {
+      final Widget child = builder(context, index);
+      return child == null ? null : IndexedSemantics(child: child, index: index);
+    }
     if (index < 0 || index >= childCount)
       return null;
-    return builder(context, index);
+    return IndexedSemantics(child: builder(context, index), index: index);
   }
 
   @override
@@ -250,15 +254,15 @@ class FixedExtentScrollController extends ScrollController {
   /// The returned [Future] resolves when the animation completes.
   ///
   /// The `duration` and `curve` arguments must not be null.
-  Future<Null> animateToItem(int itemIndex, {
+  Future<void> animateToItem(int itemIndex, {
     @required Duration duration,
     @required Curve curve,
-  }) {
+  }) async {
     if (!hasClients) {
-      return new Future<Null>.value();
+      return;
     }
 
-    final List<Future<Null>> futures = <Future<Null>>[];
+    final List<Future<void>> futures = <Future<void>>[];
     for (_FixedExtentScrollPosition position in positions) {
       futures.add(position.animateTo(
         itemIndex * position.itemExtent,
@@ -266,7 +270,7 @@ class FixedExtentScrollController extends ScrollController {
         curve: curve,
       ));
     }
-    return Future.wait(futures);
+    await Future.wait<void>(futures);
   }
 
   /// Changes which item index is centered in the controlled scroll view.
@@ -281,7 +285,7 @@ class FixedExtentScrollController extends ScrollController {
 
   @override
   ScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition oldPosition) {
-    return new _FixedExtentScrollPosition(
+    return _FixedExtentScrollPosition(
       physics: physics,
       context: context,
       initialItem: initialItem,
@@ -326,7 +330,7 @@ class FixedExtentMetrics extends FixedScrollMetrics {
     AxisDirection axisDirection,
     int itemIndex,
   }) {
-    return new FixedExtentMetrics(
+    return FixedExtentMetrics(
       minScrollExtent: minScrollExtent ?? this.minScrollExtent,
       maxScrollExtent: maxScrollExtent ?? this.maxScrollExtent,
       pixels: pixels ?? this.pixels,
@@ -406,7 +410,7 @@ class _FixedExtentScrollPosition extends ScrollPositionWithSingleContext impleme
     AxisDirection axisDirection,
     int itemIndex,
   }) {
-    return new FixedExtentMetrics(
+    return FixedExtentMetrics(
       minScrollExtent: minScrollExtent ?? this.minScrollExtent,
       maxScrollExtent: maxScrollExtent ?? this.maxScrollExtent,
       pixels: pixels ?? this.pixels,
@@ -438,7 +442,7 @@ class _FixedExtentScrollable extends Scrollable {
   final double itemExtent;
 
   @override
-  _FixedExtentScrollableState createState() => new _FixedExtentScrollableState();
+  _FixedExtentScrollableState createState() => _FixedExtentScrollableState();
 }
 
 /// This [ScrollContext] is used by [_FixedExtentScrollPosition] to read the
@@ -467,7 +471,7 @@ class FixedExtentScrollPhysics extends ScrollPhysics {
 
   @override
   FixedExtentScrollPhysics applyTo(ScrollPhysics ancestor) {
-    return new FixedExtentScrollPhysics(parent: buildParent(ancestor));
+    return FixedExtentScrollPhysics(parent: buildParent(ancestor));
   }
 
   @override
@@ -526,7 +530,7 @@ class FixedExtentScrollPhysics extends ScrollPhysics {
     // If we're going to end back at the same item because initial velocity
     // is too low to break past it, use a spring simulation to get back.
     if (settlingItemIndex == metrics.itemIndex) {
-      return new SpringSimulation(
+      return SpringSimulation(
         spring,
         metrics.pixels,
         settlingPixels,
@@ -538,7 +542,7 @@ class FixedExtentScrollPhysics extends ScrollPhysics {
     // Scenario 5:
     // Create a new friction simulation except the drag will be tweaked to land
     // exactly on the item closest to the natural stopping point.
-    return new FrictionSimulation.through(
+    return FrictionSimulation.through(
       metrics.pixels,
       settlingPixels,
       velocity,
@@ -590,7 +594,7 @@ class ListWheelScrollView extends StatefulWidget {
          !renderChildrenOutsideViewport || !clipToSize,
          RenderListWheelViewport.clipToSizeAndRenderChildrenOutsideViewportConflict,
        ),
-       childDelegate = new ListWheelChildListDelegate(children: children),
+       childDelegate = ListWheelChildListDelegate(children: children),
        super(key: key);
 
   /// Constructs a list in which children are scrolled a wheel. Its children
@@ -683,7 +687,7 @@ class ListWheelScrollView extends StatefulWidget {
   final ListWheelChildDelegate childDelegate;
 
   @override
-  _ListWheelScrollViewState createState() => new _ListWheelScrollViewState();
+  _ListWheelScrollViewState createState() => _ListWheelScrollViewState();
 }
 
 class _ListWheelScrollViewState extends State<ListWheelScrollView> {
@@ -693,7 +697,7 @@ class _ListWheelScrollViewState extends State<ListWheelScrollView> {
   @override
   void initState() {
     super.initState();
-    scrollController = widget.controller ?? new FixedExtentScrollController();
+    scrollController = widget.controller ?? FixedExtentScrollController();
     if (widget.controller is FixedExtentScrollController) {
       final FixedExtentScrollController controller = widget.controller;
       _lastReportedItemIndex = controller.initialItem;
@@ -714,7 +718,7 @@ class _ListWheelScrollViewState extends State<ListWheelScrollView> {
 
   @override
   Widget build(BuildContext context) {
-    return new NotificationListener<ScrollNotification>(
+    return NotificationListener<ScrollNotification>(
       onNotification: (ScrollNotification notification) {
         if (notification.depth == 0
             && widget.onSelectedItemChanged != null
@@ -730,12 +734,12 @@ class _ListWheelScrollViewState extends State<ListWheelScrollView> {
         }
         return false;
       },
-      child: new _FixedExtentScrollable(
+      child: _FixedExtentScrollable(
         controller: scrollController,
         physics: widget.physics,
         itemExtent: widget.itemExtent,
         viewportBuilder: (BuildContext context, ViewportOffset offset) {
-          return new ListWheelViewport(
+          return ListWheelViewport(
             diameterRatio: widget.diameterRatio,
             perspective: widget.perspective,
             offAxisFraction: widget.offAxisFraction,
@@ -772,11 +776,11 @@ class ListWheelElement extends RenderObjectElement implements ListWheelChildMana
   // Any time we do case 1, though, we reset the cache.
 
   /// A cache of widgets so that we don't have to rebuild every time.
-  final Map<int, Widget> _childWidgets = new HashMap<int, Widget>();
+  final Map<int, Widget> _childWidgets = HashMap<int, Widget>();
 
   /// The map containing all active child elements. SplayTreeMap is used so that
   /// we have all elements ordered and iterable by their keys.
-  final SplayTreeMap<int, Element> _childElements = new SplayTreeMap<int, Element>();
+  final SplayTreeMap<int, Element> _childElements = SplayTreeMap<int, Element>();
 
   @override
   void update(ListWheelViewport newWidget) {
@@ -989,12 +993,12 @@ class ListWheelViewport extends RenderObjectWidget {
   final ListWheelChildDelegate childDelegate;
 
   @override
-  ListWheelElement createElement() => new ListWheelElement(this);
+  ListWheelElement createElement() => ListWheelElement(this);
 
   @override
   RenderListWheelViewport createRenderObject(BuildContext context) {
     final ListWheelElement childManager = context;
-    return new RenderListWheelViewport(
+    return RenderListWheelViewport(
       childManager: childManager,
       offset: offset,
       diameterRatio: diameterRatio,

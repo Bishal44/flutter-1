@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import 'colors.dart';
+import 'theme.dart';
 
 // Minimum padding from horizontal edges of segmented control to edges of
 // encompassing widget.
@@ -56,9 +56,8 @@ const Duration _kFadeDuration = Duration(milliseconds: 165);
 ///
 /// A segmented control may optionally be created with custom colors. The
 /// [unselectedColor], [selectedColor], [borderColor], and [pressedColor]
-/// arguments can be used to change the segmented control's colors from
-/// [CupertinoColors.activeBlue] and [CupertinoColors.white] to a custom
-/// configuration.
+/// arguments can be used to override the segmented control's colors from
+/// [CupertinoTheme] defaults.
 ///
 /// See also:
 ///
@@ -66,8 +65,7 @@ const Duration _kFadeDuration = Duration(milliseconds: 165);
 class CupertinoSegmentedControl<T> extends StatefulWidget {
   /// Creates an iOS-style segmented control bar.
   ///
-  /// The [children], [onValueChanged], [unselectedColor], [selectedColor],
-  /// [borderColor], and [pressedColor] arguments must not be null. The
+  /// The [children] and [onValueChanged] arguments must not be null. The
   /// [children] argument must be an ordered [Map] such as a [LinkedHashMap].
   /// Further, the length of the [children] list must be greater than one.
   ///
@@ -85,20 +83,18 @@ class CupertinoSegmentedControl<T> extends StatefulWidget {
     @required this.children,
     @required this.onValueChanged,
     this.groupValue,
-    this.unselectedColor = CupertinoColors.white,
-    this.selectedColor = CupertinoColors.activeBlue,
-    this.borderColor = CupertinoColors.activeBlue,
-    this.pressedColor = const Color(0x33007AFF),
-  })  : assert(children != null),
-        assert(children.length >= 2),
-        assert(onValueChanged != null),
-        assert(groupValue == null || children.keys.any((T child) => child == groupValue),
-        'The groupValue must be either null or one of the keys in the children map.'),
-        assert(unselectedColor != null),
-        assert(selectedColor != null),
-        assert(borderColor != null),
-        assert(pressedColor != null),
-        super(key: key);
+    this.unselectedColor,
+    this.selectedColor,
+    this.borderColor,
+    this.pressedColor,
+  }) : assert(children != null),
+       assert(children.length >= 2),
+       assert(onValueChanged != null),
+       assert(
+         groupValue == null || children.keys.any((T child) => child == groupValue),
+         'The groupValue must be either null or one of the keys in the children map.',
+       ),
+       super(key: key);
 
   /// The identifying keys and corresponding widget values in the
   /// segmented control.
@@ -125,26 +121,26 @@ class CupertinoSegmentedControl<T> extends StatefulWidget {
   /// the parent [StatefulWidget] using the [State.setState] method, so that
   /// the parent gets rebuilt; for example:
   ///
-  /// ## Sample code
+  /// {@tool sample}
   ///
   /// ```dart
   /// class SegmentedControlExample extends StatefulWidget {
   ///   @override
-  ///   State createState() => new SegmentedControlExampleState();
+  ///   State createState() => SegmentedControlExampleState();
   /// }
   ///
   /// class SegmentedControlExampleState extends State<SegmentedControlExample> {
   ///   final Map<int, Widget> children = const {
-  ///     0: const Text('Child 1'),
-  ///     1: const Text('Child 2'),
+  ///     0: Text('Child 1'),
+  ///     1: Text('Child 2'),
   ///   };
   ///
   ///   int currentValue;
   ///
   ///   @override
   ///   Widget build(BuildContext context) {
-  ///     return new Container(
-  ///       child: new CupertinoSegmentedControl<int>(
+  ///     return Container(
+  ///       child: CupertinoSegmentedControl<int>(
   ///         children: children,
   ///         onValueChanged: (int newValue) {
   ///           setState(() {
@@ -157,41 +153,30 @@ class CupertinoSegmentedControl<T> extends StatefulWidget {
   ///   }
   /// }
   /// ```
+  /// {@end-tool}
   final ValueChanged<T> onValueChanged;
 
   /// The color used to fill the backgrounds of unselected widgets and as the
   /// text color of the selected widget.
   ///
-  /// This attribute must not be null.
-  ///
-  /// If this attribute is unspecified, this color will default to
-  /// [CupertinoColors.white].
+  /// Defaults to [CupertinoTheme]'s `primaryContrastingColor` if null.
   final Color unselectedColor;
 
   /// The color used to fill the background of the selected widget and as the text
   /// color of unselected widgets.
   ///
-  /// This attribute must not be null.
-  ///
-  /// If this attribute is unspecified, this color will default to
-  /// [CupertinoColors.activeBlue].
+  /// Defaults to [CupertinoTheme]'s `primaryColor` if null.
   final Color selectedColor;
 
   /// The color used as the border around each widget.
   ///
-  /// This attribute must not be null.
-  ///
-  /// If this attribute is unspecified, this color will default to
-  /// [CupertinoColors.activeBlue].
+  /// Defaults to [CupertinoTheme]'s `primaryColor` if null.
   final Color borderColor;
 
   /// The color used to fill the background of the widget the user is
   /// temporarily interacting with through a long press or drag.
   ///
-  /// This attribute must not be null.
-  ///
-  /// If this attribute is unspecified, this color will default to
-  /// `Color(0x33007AFF)`, a light, partially-transparent blue color.
+  /// Defaults to the selectedColor at 20% opacity if null.
   final Color pressedColor;
 
   @override
@@ -209,21 +194,68 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
   ColorTween _reverseBackgroundColorTween;
   ColorTween _textColorTween;
 
-  @override
-  void initState() {
-    super.initState();
-    _forwardBackgroundColorTween = new ColorTween(
-      begin: widget.pressedColor,
-      end: widget.selectedColor,
+  Color _selectedColor;
+  Color _unselectedColor;
+  Color _borderColor;
+  Color _pressedColor;
+
+  AnimationController createAnimationController() {
+    return AnimationController(
+      duration: _kFadeDuration,
+      vsync: this,
+    )..addListener(() {
+        setState(() {
+          // State of background/text colors has changed
+        });
+      });
+  }
+
+  bool _updateColors() {
+    assert(mounted, 'This should only be called after didUpdateDependencies');
+    bool changed = false;
+    final Color selectedColor = widget.selectedColor ?? CupertinoTheme.of(context).primaryColor;
+    if (_selectedColor != selectedColor) {
+      changed = true;
+      _selectedColor = selectedColor;
+    }
+    final Color unselectedColor = widget.unselectedColor ?? CupertinoTheme.of(context).primaryContrastingColor;
+    if (_unselectedColor != unselectedColor) {
+      changed = true;
+      _unselectedColor = unselectedColor;
+    }
+    final Color borderColor = widget.borderColor ?? CupertinoTheme.of(context).primaryColor;
+    if (_borderColor != borderColor) {
+      changed = true;
+      _borderColor = borderColor;
+    }
+    final Color pressedColor = widget.pressedColor ?? CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
+    if (_pressedColor != pressedColor) {
+      changed = true;
+      _pressedColor = pressedColor;
+    }
+
+    _forwardBackgroundColorTween = ColorTween(
+      begin: _pressedColor,
+      end: _selectedColor,
     );
-    _reverseBackgroundColorTween = new ColorTween(
-      begin: widget.unselectedColor,
-      end: widget.selectedColor,
+    _reverseBackgroundColorTween = ColorTween(
+      begin: _unselectedColor,
+      end: _selectedColor,
     );
-    _textColorTween = new ColorTween(
-      begin: widget.selectedColor,
-      end: widget.unselectedColor,
+    _textColorTween = ColorTween(
+      begin: _selectedColor,
+      end: _unselectedColor,
     );
+    return changed;
+  }
+
+  void _updateAnimationControllers() {
+    assert(mounted, 'This should only be called after didUpdateDependencies');
+    for (AnimationController controller in _selectionControllers) {
+      controller.dispose();
+    }
+    _selectionControllers.clear();
+    _childTweens.clear();
 
     for (T key in widget.children.keys) {
       final AnimationController animationController = createAnimationController();
@@ -237,15 +269,36 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
     }
   }
 
-  AnimationController createAnimationController() {
-    return new AnimationController(
-      duration: _kFadeDuration,
-      vsync: this,
-    )..addListener(() {
-        setState(() {
-          // State of background/text colors has changed
-        });
-      });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_updateColors()) {
+      _updateAnimationControllers();
+    }
+  }
+
+  @override
+  void didUpdateWidget(CupertinoSegmentedControl<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (_updateColors() || oldWidget.children.length != widget.children.length) {
+      _updateAnimationControllers();
+    }
+
+    if (oldWidget.groupValue != widget.groupValue) {
+      int index = 0;
+      for (T key in widget.children.keys) {
+        if (widget.groupValue == key) {
+          _childTweens[index] = _forwardBackgroundColorTween;
+          _selectionControllers[index].forward();
+        } else {
+          _childTweens[index] = _reverseBackgroundColorTween;
+          _selectionControllers[index].reverse();
+        }
+        index += 1;
+      }
+    }
   }
 
   @override
@@ -255,6 +308,7 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
     }
     super.dispose();
   }
+
 
   void _onTapDown(T currentKey) {
     if (_pressedKey == null && currentKey != widget.groupValue) {
@@ -281,53 +335,18 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
     if (_selectionControllers[index].isAnimating)
       return _textColorTween.evaluate(_selectionControllers[index]);
     if (widget.groupValue == currentKey)
-      return widget.unselectedColor;
-    return widget.selectedColor;
+      return _unselectedColor;
+    return _selectedColor;
   }
 
   Color getBackgroundColor(int index, T currentKey) {
     if (_selectionControllers[index].isAnimating)
       return _childTweens[index].evaluate(_selectionControllers[index]);
     if (widget.groupValue == currentKey)
-      return widget.selectedColor;
+      return _selectedColor;
     if (_pressedKey == currentKey)
-      return widget.pressedColor;
-    return widget.unselectedColor;
-  }
-
-  void updateAnimationControllers() {
-    if (_selectionControllers.length > widget.children.length) {
-      _selectionControllers.length = widget.children.length;
-      _childTweens.length = widget.children.length;
-    } else {
-      for (int index = _selectionControllers.length; index < widget.children.length; index += 1) {
-        _selectionControllers.add(createAnimationController());
-        _childTweens.add(_reverseBackgroundColorTween);
-      }
-    }
-  }
-
-  @override
-  void didUpdateWidget(CupertinoSegmentedControl<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.children.length != widget.children.length) {
-      updateAnimationControllers();
-    }
-
-    if (oldWidget.groupValue != widget.groupValue) {
-      int index = 0;
-      for (T key in widget.children.keys) {
-        if (widget.groupValue == key) {
-          _childTweens[index] = _forwardBackgroundColorTween;
-          _selectionControllers[index].forward();
-        } else {
-          _childTweens[index] = _reverseBackgroundColorTween;
-          _selectionControllers[index].reverse();
-        }
-        index += 1;
-      }
-    }
+      return _pressedColor;
+    return _unselectedColor;
   }
 
   @override
@@ -344,15 +363,15 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
       final TextStyle textStyle = DefaultTextStyle.of(context).style.copyWith(
         color: getTextColor(index, currentKey),
       );
-      final IconThemeData iconTheme = new IconThemeData(
+      final IconThemeData iconTheme = IconThemeData(
         color: getTextColor(index, currentKey),
       );
 
-      Widget child = new Center(
+      Widget child = Center(
         child: widget.children[currentKey],
       );
 
-      child = new GestureDetector(
+      child = GestureDetector(
         onTapDown: (TapDownDetails event) {
           _onTapDown(currentKey);
         },
@@ -360,11 +379,11 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
         onTap: () {
           _onTap(currentKey);
         },
-        child: new IconTheme(
+        child: IconTheme(
           data: iconTheme,
-          child: new DefaultTextStyle(
+          child: DefaultTextStyle(
             style: textStyle,
-            child: new Semantics(
+            child: Semantics(
               button: true,
               inMutuallyExclusiveGroup: true,
               selected: widget.groupValue == currentKey,
@@ -379,17 +398,17 @@ class _SegmentedControlState<T> extends State<CupertinoSegmentedControl<T>>
       index += 1;
     }
 
-    final Widget box = new _SegmentedControlRenderWidget<T>(
+    final Widget box = _SegmentedControlRenderWidget<T>(
       children: _gestureChildren,
       selectedIndex: selectedIndex,
       pressedIndex: pressedIndex,
       backgroundColors: _backgroundColors,
-      borderColor: widget.borderColor,
+      borderColor: _borderColor,
     );
 
-    return new Padding(
+    return Padding(
       padding: _kHorizontalItemPadding.resolve(Directionality.of(context)),
-      child: new UnconstrainedBox(
+      child: UnconstrainedBox(
         constrainedAxis: Axis.horizontal,
         child: box,
       ),
@@ -417,7 +436,7 @@ class _SegmentedControlRenderWidget<T> extends MultiChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return new _RenderSegmentedControl<T>(
+    return _RenderSegmentedControl<T>(
       textDirection: Directionality.of(context),
       selectedIndex: selectedIndex,
       pressedIndex: pressedIndex,
@@ -441,7 +460,7 @@ class _SegmentedControlContainerBoxParentData extends ContainerBoxParentData<Ren
   RRect surroundingRect;
 }
 
-typedef RenderBox _NextChild(RenderBox child);
+typedef _NextChild = RenderBox Function(RenderBox child);
 
 class _RenderSegmentedControl<T> extends RenderBox
     with ContainerRenderObjectMixin<RenderBox, ContainerBoxParentData<RenderBox>>,
@@ -453,12 +472,12 @@ class _RenderSegmentedControl<T> extends RenderBox
     @required TextDirection textDirection,
     @required List<Color> backgroundColors,
     @required Color borderColor,
-  })  : assert(textDirection != null),
-        _textDirection = textDirection,
-        _selectedIndex = selectedIndex,
-        _pressedIndex = pressedIndex,
-        _backgroundColors = backgroundColors,
-        _borderColor = borderColor {
+  }) : assert(textDirection != null),
+       _textDirection = textDirection,
+       _selectedIndex = selectedIndex,
+       _pressedIndex = pressedIndex,
+       _backgroundColors = backgroundColors,
+       _borderColor = borderColor {
     addAll(children);
   }
 
@@ -518,7 +537,7 @@ class _RenderSegmentedControl<T> extends RenderBox
     double minWidth = 0.0;
     while (child != null) {
       final _SegmentedControlContainerBoxParentData childParentData = child.parentData;
-      final double childWidth = child.computeMinIntrinsicWidth(height);
+      final double childWidth = child.getMinIntrinsicWidth(height);
       minWidth = math.max(minWidth, childWidth);
       child = childParentData.nextSibling;
     }
@@ -531,7 +550,7 @@ class _RenderSegmentedControl<T> extends RenderBox
     double maxWidth = 0.0;
     while (child != null) {
       final _SegmentedControlContainerBoxParentData childParentData = child.parentData;
-      final double childWidth = child.computeMaxIntrinsicWidth(height);
+      final double childWidth = child.getMaxIntrinsicWidth(height);
       maxWidth = math.max(maxWidth, childWidth);
       child = childParentData.nextSibling;
     }
@@ -544,7 +563,7 @@ class _RenderSegmentedControl<T> extends RenderBox
     double minHeight = 0.0;
     while (child != null) {
       final _SegmentedControlContainerBoxParentData childParentData = child.parentData;
-      final double childHeight = child.computeMinIntrinsicHeight(width);
+      final double childHeight = child.getMinIntrinsicHeight(width);
       minHeight = math.max(minHeight, childHeight);
       child = childParentData.nextSibling;
     }
@@ -557,7 +576,7 @@ class _RenderSegmentedControl<T> extends RenderBox
     double maxHeight = 0.0;
     while (child != null) {
       final _SegmentedControlContainerBoxParentData childParentData = child.parentData;
-      final double childHeight = child.computeMaxIntrinsicHeight(width);
+      final double childHeight = child.getMaxIntrinsicHeight(width);
       maxHeight = math.max(maxHeight, childHeight);
       child = childParentData.nextSibling;
     }
@@ -572,7 +591,7 @@ class _RenderSegmentedControl<T> extends RenderBox
   @override
   void setupParentData(RenderBox child) {
     if (child.parentData is! _SegmentedControlContainerBoxParentData) {
-      child.parentData = new _SegmentedControlContainerBoxParentData();
+      child.parentData = _SegmentedControlContainerBoxParentData();
     }
   }
 
@@ -581,18 +600,18 @@ class _RenderSegmentedControl<T> extends RenderBox
     double start = 0.0;
     while (child != null) {
       final _SegmentedControlContainerBoxParentData childParentData = child.parentData;
-      final Offset childOffset = new Offset(start, 0.0);
+      final Offset childOffset = Offset(start, 0.0);
       childParentData.offset = childOffset;
-      final Rect childRect = new Rect.fromLTWH(start, 0.0, child.size.width, child.size.height);
+      final Rect childRect = Rect.fromLTWH(start, 0.0, child.size.width, child.size.height);
       RRect rChildRect;
       if (child == leftChild) {
-        rChildRect = new RRect.fromRectAndCorners(childRect, topLeft: const Radius.circular(3.0),
+        rChildRect = RRect.fromRectAndCorners(childRect, topLeft: const Radius.circular(3.0),
             bottomLeft: const Radius.circular(3.0));
       } else if (child == rightChild) {
-        rChildRect = new RRect.fromRectAndCorners(childRect, topRight: const Radius.circular(3.0),
+        rChildRect = RRect.fromRectAndCorners(childRect, topRight: const Radius.circular(3.0),
             bottomRight: const Radius.circular(3.0));
       } else {
-        rChildRect = new RRect.fromRectAndCorners(childRect);
+        rChildRect = RRect.fromRectAndCorners(childRect);
       }
       childParentData.surroundingRect = rChildRect;
       start += child.size.width;
@@ -619,7 +638,7 @@ class _RenderSegmentedControl<T> extends RenderBox
 
     constraints.constrainHeight(maxHeight);
 
-    final BoxConstraints childConstraints = new BoxConstraints.tightFor(
+    final BoxConstraints childConstraints = BoxConstraints.tightFor(
       width: childWidth,
       height: maxHeight,
     );
@@ -647,7 +666,7 @@ class _RenderSegmentedControl<T> extends RenderBox
         break;
     }
 
-    size = constraints.constrain(new Size(childWidth * childCount, maxHeight));
+    size = constraints.constrain(Size(childWidth * childCount, maxHeight));
   }
 
   @override
@@ -668,13 +687,13 @@ class _RenderSegmentedControl<T> extends RenderBox
 
     context.canvas.drawRRect(
       childParentData.surroundingRect.shift(offset),
-      new Paint()
+      Paint()
         ..color = backgroundColors[childIndex]
         ..style = PaintingStyle.fill,
     );
     context.canvas.drawRRect(
       childParentData.surroundingRect.shift(offset),
-      new Paint()
+      Paint()
         ..color = borderColor
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
